@@ -1,14 +1,18 @@
 #! /usr/bin/python3
 
-# Arguments
-# ./gameservers.py [action] [serverid] [game] [ip] [port] [slots] [password]
-# Actions: install, reinstall, start, stop, restart, delete, updatepassword, sysload
-# Games: all files in dir /home/cp/gameservers/configs
+# gameservers.py
+#		-action		[install|reinstall|start|stop|restart|delete|updatepassword|sysload]
+#		-sid
+#		-game
+#		-ip
+#		-port
+#		-slots
+#		-password
 
-#Ports:
-# PORT1 - Port
-# PORT2 - Port+1
-# PORT3 - Port+1000
+# Ports:
+# Port #1 = port
+# Port #2 = port + 1
+# Port #3 = port + 1000
 
 import sys
 import os
@@ -17,18 +21,35 @@ import json
 import crypt
 import hashlib
 import datetime
+import argparse
 
-# Check arguments
-if len(sys.argv) < 8:
-	returnResult('ERROR', 'NoArguments'):
+# Parse arguments
+argParser = argparse.ArgumentParser(description='LitePanel server-side.')
+argParser.add_argument("-action", type=str,
+					choices=['install', 'reinstall', 'start', 'stop', 'restart', 'delete', 'updatepassword', 'sysload'],
+					help="Action", required=True)
+argParser.add_argument("-sid", type=int,
+					help="Server ID", required=True)
+argParser.add_argument("-game", type=str,
+					choices=[os.path.splitext(os.path.basename(f))[0] for f in os.listdir("/home/cp/gameservers/configs/")],
+					help="Game code", required=True)
+argParser.add_argument("-ip", type=str,
+					help="IP", required=True)
+argParser.add_argument("-port", type=int,
+					help="Port", required=True)
+argParser.add_argument("-slots", type=int,
+					help="Slots ammount", required=True)
+argParser.add_argument("-password", type=str,
+					help="Password", required=True)
+args = argParser.parse_args()
 
-action		=	str(sys.argv[1])
-serverid	=	int(sys.argv[2])
-game		=	str(sys.argv[3])
-ip			=	str(sys.argv[4])
-port		=	int(sys.argv[5])
-slots		=	int(sys.argv[6])
-password	=	str(sys.argv[7])
+action		=	str(args.action)
+serverid	=	int(args.sid)
+game		=	str(args.game)
+ip			=	str(args.ip)
+port		=	int(args.port)
+slots		=	int(args.slots)
+password	=	str(args.password)
 
 salt = 'tlas'
 username = 'gs' + str(serverid)
@@ -195,7 +216,7 @@ def serverSysLoad():
 	p.close()
 	print('[[' + str(cpu) + '::' + str(ram) + ']]')
 
-def returnResult(status, description):
+def returnResult(status, description = ''):
 	date = datetime.datetime.today()
 	filename = date.strftime('%d-%m-%y') + '.xls'
 	if os.path.isfile('/home/cp/logs/' + filename):
@@ -221,7 +242,7 @@ if action == 'install':
 	elif not serverConfigure():
 		returnResult('ERROR', 'ConfigError')
 	else:
-		returnResult('OK', '')
+		returnResult('OK')
 
 if action == 'reinstall':
 	if serverStatus():
@@ -233,7 +254,7 @@ if action == 'reinstall':
 	elif not serverConfigure():
 		returnResult('ERROR', 'ConfigError')
 	else:
-		returnResult('OK', '')
+		returnResult('OK')
 
 if action == 'start':
 	if serverStatus():
@@ -247,13 +268,13 @@ if action == 'start':
 	elif not serverStart():
 		returnResult('ERROR', 'StartError')
 	else:
-		returnResult('OK', '')
+		returnResult('OK')
 
 if action == 'stop':
 	if not serverStop():
 		returnResult('ERROR', 'StopError')
 	else:
-		returnResult('OK', '')
+		returnResult('OK')
 
 if action == 'restart':
 	if not serverStop():
@@ -265,7 +286,7 @@ if action == 'restart':
 	elif not serverStart():
 		returnResult('ERROR', 'StartError')
 	else:
-		returnResult('OK', '')
+		returnResult('OK')
 
 if action == 'delete':
 	if serverStatus():
@@ -274,7 +295,7 @@ if action == 'delete':
 	if not serverDelete():
 		returnResult('ERROR', 'DeleteError')
 	else:
-		returnResult('OK', '')
+		returnResult('OK')
 
 if action == 'updatepassword':
 	if serverStatus():
@@ -284,7 +305,7 @@ if action == 'updatepassword':
 	if not serverUpdatePassword():
 		returnResult('ERROR', 'UpdatePasswordError')
 	else:
-		returnResult('OK', '')
+		returnResult('OK')
 
 
 if action == 'sysload':
