@@ -197,6 +197,7 @@ def serverUpdatePassword():
 
 def serverDelete():
 	os.system('userdel -rf ' + username)
+	os.system('rm -rf /var/run/screen/S-' + username)
 	return True
 
 def serverSysLoad():
